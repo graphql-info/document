@@ -1,0 +1,28 @@
+{
+  "name": "@graphql-info/document",
+  "version": "0.0.1",
+  "description": "Add generated client documents for queries and mutations",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "keywords": [
+    "GraphQL",
+    "documentation",
+    "graphql-info"
+  ],
+  "author": "Ilya Volodin",
+  "license": "MIT",
+  "dependencies": {
+    "lit-html": "^1.3.0",
+    "prismjs": "^1.23.0"
+  },
+  "peerDependencies": {
+    "@graphql-info/core": "^0.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.22.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1"
+  }
+}

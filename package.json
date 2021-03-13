@@ -2,7 +2,7 @@
   "name": "@graphql-info/document",
   "version": "0.0.1",
   "description": "Add generated client documents for queries and mutations",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "lint": "eslint ."
   },

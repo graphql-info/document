@@ -2,22 +2,22 @@ const { html } = require('@popeindustries/lit-html-server');
 const { unsafeHTML } = require('@popeindustries/lit-html-server/directives/unsafe-html');
 const prism = require('prismjs');
 const loadLanguages = require('prismjs/components/');
-const generateQuery = require('./queryGenerator');
+const generateExample = require('./generateExample');
 
 loadLanguages(['graphql']);
 
 module.exports = {
     render: (ref, schema, type, originalRenderer) => {
         const page = originalRenderer(ref, schema);
-        const query = generateQuery(ref.name, type === 'query' ? 'Query' : 'Mutation', '', {}, {}, [], 0, schema);
+        const example = generateExample(ref, schema);
         page.push({
-            name: 'documents',
+            name: 'example',
             type: 'lit-html',
             value: html`
-                <div class="documents">
-                    <h3>Documents:</h3>
+                <div class="example">
+                    <h3>Example:</h3>
                     <section class="code">
-                        <pre class="language-graphql">${unsafeHTML(prism.highlight(query.queryStr, prism.languages.graphql, 'graphql'))}</pre>
+                        <pre class="language-graphql">${unsafeHTML(prism.highlight(example.document, prism.languages.graphql, 'graphql'))}</pre>
                     </section>
                 </div>`
         });

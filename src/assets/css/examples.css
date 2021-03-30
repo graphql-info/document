@@ -1,0 +1,15 @@
+.example {
+    display: flex;
+}
+
+.example>div {
+    flex: 1;
+}
+
+.example-code {
+    margin-right: 10px;
+}
+
+.example-inputs {
+    margin-left: 10px;
+}

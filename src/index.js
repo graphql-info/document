@@ -2,11 +2,14 @@ const { html } = require('@popeindustries/lit-html-server');
 const { unsafeHTML } = require('@popeindustries/lit-html-server/directives/unsafe-html');
 const prism = require('prismjs');
 const loadLanguages = require('prismjs/components/');
+const path = require('path');
 const generateExample = require('./generateExample');
 
 loadLanguages(['graphql']);
+loadLanguages(['json']);
 
 module.exports = {
+    init: () => [{ name: 'css/examples.css', path: path.resolve(__dirname, './assets/css/examples.css') }],
     render: (ref, schema, type, originalRenderer) => {
         const page = originalRenderer(ref, schema);
         const example = generateExample(ref, schema);
@@ -15,10 +18,20 @@ module.exports = {
             type: 'lit-html',
             value: html`
                 <div class="example">
-                    <h3>Example:</h3>
-                    <section class="code">
-                        <pre class="language-graphql">${unsafeHTML(prism.highlight(example.document, prism.languages.graphql, 'graphql'))}</pre>
-                    </section>
+                    <div class="example-code">
+                        <h3>Example:</h3>
+                        <section class="code">
+                            <pre class="language-graphql">${unsafeHTML(prism.highlight(`${example.document}\n\n${typeof example.fragments === 'string' ? example.fragments : ''}`, prism.languages.graphql, 'graphql'))}</pre>
+                        </section>
+                    </div>
+                    ${typeof example.inputs === 'string' && example.inputs !== '{}'
+                        ? html`
+                        <div class="example-inputs">
+                            <h3>Example Inputs:</h3>
+                            <section class="inputs">
+                                <pre class="language-json">${unsafeHTML(prism.highlight(example.inputs, prism.languages.json, 'json'))}</pre>
+                            </section>
+                        </div>` : ''}
                 </div>`
         });
         return page;

@@ -21,7 +21,7 @@ const printInput = (root, values) => {
             }
             values.inputs[name] = item;
             return `${getTypeName(item)}: $${name}`;
-        }).join(',')})`;
+        }).join(', ')})`;
     }
     return '';
 };
@@ -82,7 +82,7 @@ const printType = (root, schema, fragments) => {
 };
 
 const printFragments = (schema, fragments, inputs) => {
-    const filteredFragments = Object.fromEntries(Object.entries(fragments).filter((_, x) => x > 1));
+    const filteredFragments = Object.fromEntries(Object.entries(fragments).filter(([, value]) => value > 1));
     const renderedFragments = Object.keys(filteredFragments).map((name) => {
         const type = schema.getType(name);
         if (type.astNode && !type.astNode.type) {
@@ -93,12 +93,40 @@ const printFragments = (schema, fragments, inputs) => {
     return renderedFragments.join('\n');
 };
 
+const outputInput = (schema, inputs) => {
+    const result = {};
+    Object.entries(inputs).forEach(([key, value]) => {
+        result[key] = {};
+        const type = schema.getType(getTypeName(value.type));
+        switch (type.constructor.name) {
+            case 'GraphQLInputObjectType':
+                if (type.astNode && Array.isArray(type.astNode.fields) && type.astNode.fields.length > 0) {
+                    type.astNode.fields.forEach((field) => {
+                        result[key][field.name.value] = getTypeName(field.type);
+                    });
+                }
+                break;
+            case 'GraphQLEnumType':
+                result[key] = type.astNode.name.value;
+                break;
+            case 'GraphQLScalarType':
+                result[key] = type.name;
+                break;
+            default:
+                break;
+        }
+        return JSON.stringify(result, null, indentSpacing);
+    });
+    return JSON.stringify(result, null, indentSpacing);
+};
+
 const generateExample = (root, schema) => {
     let output = printType(root, schema, {});
     if (Object.keys(output.fragments).filter((x) => output.fragments[x] > 1).length > 0) {
-        output = printType(root, schema, Object.fromEntries(Object.entries(output.fragments).filter((_, x) => x > 1)));
-        output.document = `${output.document}\n\n${printFragments(schema, output.fragments, output.inputs)}`;
+        output = printType(root, schema, Object.fromEntries(Object.entries(output.fragments).filter(([, value]) => value > 1)));
+        output.fragments = printFragments(schema, output.fragments, output.inputs);
     }
+    output.inputs = outputInput(schema, output.inputs);
     return output;
 };
 

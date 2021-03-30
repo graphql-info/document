@@ -1,6 +1,6 @@
 {
   "name": "@graphql-info/document",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Add generated client documents for queries and mutations",
   "main": "src/index.js",
   "scripts": {

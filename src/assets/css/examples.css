@@ -2,14 +2,15 @@
     display: flex;
 }
 
-.example>div {
-    flex: 1;
-}
-
 .example-code {
     margin-right: 10px;
+    flex: 2;
+    overflow: auto;
+    max-width: 66vw;
 }
 
 .example-inputs {
     margin-left: 10px;
+    flex: 1;
+    overflow: auto;
 }

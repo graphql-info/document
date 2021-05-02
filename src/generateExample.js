@@ -51,6 +51,19 @@ const printObject = (root, schema, fragments, values, indentLevel) => {
         }
         return `${indent}${root.name.value}${printInput(root, values)} ${printFields(root, schema, fragments, values, indentLevel + 1)}`;
     }
+    if (indentLevel > maxDepth) {
+        return '';
+    }
+    if (parentType.constructor.name === 'GraphQLUnionType') {
+        return parentType.astNode.types.map((type) => {
+            if (!values.fragments[getTypeName(type)]) {
+                values.fragments[getTypeName(type)] = 1;
+                return `${indent}... on ${getTypeName(type)} ${printObject(schema.getType(getTypeName(type)).astNode, schema, fragments, values, indentLevel + 1)}`;
+            }
+            values.fragments[getTypeName(type)] += 1;
+            return `${indent}... on ${getTypeName(type)} {\n${indent}  ...${getTypeName(type)}Fragment\n${indent}}}`;
+        }).join('\n');
+    }
     return `${indent}${root.name.value}`;
 };
 
@@ -59,6 +72,7 @@ const printFields = (root, schema, fragments, values, indentLevel) => {
     switch (parentType.constructor.name) {
         case 'GraphQLUnionType':
             return printUnion(parentType.astNode, schema, fragments, values, indentLevel);
+        case 'GraphQLInterfaceType':
         case 'GraphQLObjectType':
             return printObject(parentType.astNode, schema, fragments, values, indentLevel);
         case 'GraphQLScalarType':
@@ -74,10 +88,12 @@ const printType = (root, schema, fragments) => {
         inputs: {},
         fragments
     };
+
     const operation = root.name && typeof root.name === 'string';
     if (operation) {
-        output.document = `${output.document}${root.name}${printInput(root.astNode, output)} ${printFields(root, schema, fragments, output, 1)}`;
+        output.document = `${root.name}${printInput(root.astNode, output)} ${printFields(root, schema, fragments, output, 2)}`;
     }
+
     return output;
 };
 
@@ -102,7 +118,7 @@ const outputInput = (schema, inputs) => {
             case 'GraphQLInputObjectType':
                 if (type.astNode && Array.isArray(type.astNode.fields) && type.astNode.fields.length > 0) {
                     type.astNode.fields.forEach((field) => {
-                        result[key][field.name.value] = getTypeName(field.type);
+                        result[key][field.name.value] = `${getTypeName(field.type)}${field.type.kind === 'NonNullType' ? '!' : ''}`;
                     });
                 }
                 break;
@@ -110,14 +126,38 @@ const outputInput = (schema, inputs) => {
                 result[key] = type.astNode.name.value;
                 break;
             case 'GraphQLScalarType':
-                result[key] = type.name;
+                result[key] = `${type.name}${value.type.kind === 'NonNullType' ? '!' : ''}`;
                 break;
             default:
                 break;
         }
-        return JSON.stringify(result, null, indentSpacing);
+        return result;
     });
-    return JSON.stringify(result, null, indentSpacing);
+    return result;
+};
+
+const outputInputRegistration = (schema, inputs) => {
+    const result = {};
+    Object.entries(inputs).forEach(([key, value]) => {
+        result[key] = `${getTypeName(value.type)}${value.type.kind === 'NonNullType' ? '!' : ''}`;
+    });
+    return result;
+};
+
+const wrapOutput = (root, schema, output) => {
+    const indent = ''.padStart(indentSpacing, ' ');
+
+    const isQuery = schema.getQueryType().getFields()[root.name];
+
+    const inputs = outputInputRegistration(schema, output.inputs);
+
+    const inputList = Object.keys(inputs).length < 5
+        ? Object.entries(inputs).map(([key, value]) => `$${key}: ${value}`).join(', ')
+        : Object.entries(inputs).map(([key, value]) => `$${key}: ${value}`).join(`, \n${indent}`);
+
+    output.document = `${isQuery ? 'query' : 'mutation'} ${root.name}${Object.keys(inputs).length > 0 ? `(${inputList})` : ''} {\n${indent}${output.document}\n}`;
+
+    return output;
 };
 
 const generateExample = (root, schema) => {
@@ -126,6 +166,8 @@ const generateExample = (root, schema) => {
         output = printType(root, schema, Object.fromEntries(Object.entries(output.fragments).filter(([, value]) => value > 1)));
         output.fragments = printFragments(schema, output.fragments, output.inputs);
     }
+    output = wrapOutput(root, schema, output);
+
     output.inputs = outputInput(schema, output.inputs);
     return output;
 };

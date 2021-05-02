@@ -24,12 +24,12 @@ module.exports = {
                             <pre class="language-graphql">${unsafeHTML(prism.highlight(`${example.document}\n\n${typeof example.fragments === 'string' ? example.fragments : ''}`, prism.languages.graphql, 'graphql'))}</pre>
                         </section>
                     </div>
-                    ${typeof example.inputs === 'string' && example.inputs !== '{}'
+                    ${example.inputs && Object.keys(example.inputs).length > 0
                         ? html`
                         <div class="example-inputs">
                             <h3>Example Inputs:</h3>
                             <section class="inputs">
-                                <pre class="language-json">${unsafeHTML(prism.highlight(example.inputs, prism.languages.json, 'json'))}</pre>
+                                <pre class="language-json">${unsafeHTML(prism.highlight(JSON.stringify(example.inputs, null, 2), prism.languages.json, 'json'))}</pre>
                             </section>
                         </div>` : ''}
                 </div>`

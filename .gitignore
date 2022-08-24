@@ -2,4 +2,3 @@ node_modules
 docs
 .DS_Store
 .vscode
-package-lock.json
